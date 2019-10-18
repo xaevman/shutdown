@@ -1,6 +1,7 @@
 package shutdown
 
 import (
+	"sync"
 	"time"
 )
 
@@ -11,6 +12,7 @@ type Sync struct {
 	isShutdown bool
 	timeout    int
 	complete   chan interface{}
+	lock       sync.Mutex
 }
 
 func New() *Sync {
@@ -35,6 +37,13 @@ func (s *Sync) Start() {
 }
 
 func (s *Sync) Complete() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if s.isShutdown {
+		return
+	}
+
 	s.isShutdown = true
 	close(s.complete)
 }
